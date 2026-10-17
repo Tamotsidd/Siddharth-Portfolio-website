@@ -53,7 +53,7 @@
       label: "STREET",
       folder: "assets/images/photography/street",
       files: [
-        "_DSC0012_Original.jpg", "1742655081902.jpg", "1742660300343.jpg",
+        "_DSC0012_Original.webp", "1742655081902.jpg", "1742660300343.jpg",
         "DSC_8067_Original.jpg", "DSC03515.jpg", "DSC03559.jpg",
         "DSC03575.jpg", "DSC03592.jpg", "DSC03610.jpg",
         "DSC03678-HDR.jpg", "DSC03693.jpg", "DSC03704.jpg",
