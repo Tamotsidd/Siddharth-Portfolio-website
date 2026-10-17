@@ -1,106 +1,138 @@
-  document.body.classList.add('js-enabled');
-  const revealSections = document.querySelectorAll('section');
-  const sectionObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('is-visible');
-      observer.unobserve(entry.target);
+const header = document.querySelector(".site-header");
+const toggle = document.querySelector(".menu-toggle");
+const nav = document.querySelector(".main-nav");
+const navLinks = [...document.querySelectorAll(".main-nav a")];
+const glow = document.querySelector(".cursor-glow");
+
+toggle?.addEventListener("click", () => {
+  const open = nav.classList.toggle("open");
+  toggle.setAttribute("aria-expanded", open);
+});
+navLinks.forEach(link => link.addEventListener("click", () => nav.classList.remove("open")));
+
+window.addEventListener("scroll", () => header.classList.toggle("scrolled", window.scrollY > 30));
+
+if (window.matchMedia("(pointer:fine)").matches) {
+  window.addEventListener("pointermove", e => {
+    glow.style.left = e.clientX + "px";
+    glow.style.top = e.clientY + "px";
+  });
+} else glow.remove();
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    entry.target.classList.toggle("visible", entry.isIntersecting);
+  });
+}, {threshold: .12});
+document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+const filters = document.querySelectorAll(".filter[data-filter]");
+const cards = document.querySelectorAll(".photo-card");
+filters.forEach(btn => btn.addEventListener("click", () => {
+  filters.forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  const filter = btn.dataset.filter;
+  cards.forEach(card => {
+    const show = filter === "all" || card.dataset.category === filter;
+    card.style.display = show ? "" : "none";
+  });
+}));
+
+const galleryGrids = document.querySelectorAll("[data-gallery]");
+if (galleryGrids.length) {
+  const imageLightbox = document.createElement("dialog");
+  imageLightbox.className = "image-lightbox";
+  imageLightbox.setAttribute("aria-label", "Image preview");
+
+  const closeButton = document.createElement("button");
+  closeButton.className = "image-lightbox-close";
+  closeButton.type = "button";
+  closeButton.setAttribute("aria-label", "Close image preview");
+  closeButton.textContent = "×";
+
+  const previousButton = document.createElement("button");
+  previousButton.className = "image-lightbox-nav image-lightbox-previous";
+  previousButton.type = "button";
+  previousButton.setAttribute("aria-label", "Previous photo");
+  previousButton.textContent = "←";
+
+  const previewImage = document.createElement("img");
+  previewImage.className = "image-lightbox-image";
+  previewImage.alt = "";
+
+  const caption = document.createElement("p");
+  caption.className = "image-lightbox-caption";
+  caption.setAttribute("aria-live", "polite");
+
+  const nextButton = document.createElement("button");
+  nextButton.className = "image-lightbox-nav image-lightbox-next";
+  nextButton.type = "button";
+  nextButton.setAttribute("aria-label", "Next photo");
+  nextButton.textContent = "→";
+
+  imageLightbox.append(closeButton, previousButton, previewImage, caption, nextButton);
+  document.body.append(imageLightbox);
+
+  let activeGallery = [];
+  let activeIndex = 0;
+
+  const showImage = index => {
+    activeIndex = (index + activeGallery.length) % activeGallery.length;
+    const card = activeGallery[activeIndex];
+    const image = card.querySelector("img");
+    const category = card.querySelector("figcaption")?.textContent.trim() || "";
+    previewImage.src = image.currentSrc || image.src;
+    previewImage.alt = image.alt;
+    caption.textContent = `${String(activeIndex + 1).padStart(2, "0")}. ${category}`;
+    const hasMultipleImages = activeGallery.length > 1;
+    previousButton.hidden = !hasMultipleImages;
+    nextButton.hidden = !hasMultipleImages;
+  };
+
+  const openImage = card => {
+    const gallery = card.closest("[data-gallery]");
+    activeGallery = [...gallery.querySelectorAll(".photo-card, .design-card")];
+    showImage(activeGallery.indexOf(card));
+    document.body.classList.add("lightbox-open");
+    imageLightbox.showModal();
+    closeButton.focus();
+  };
+
+  galleryGrids.forEach(gallery => {
+    gallery.addEventListener("click", event => {
+      const card = event.target.closest(".photo-card, .design-card");
+      if (card) openImage(card);
     });
-  }, {threshold:0.12});
-  revealSections.forEach(section => sectionObserver.observe(section));
-
-  const themeToggle = document.getElementById('themeToggle');
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') document.body.classList.add('dark-mode');
-
-  if (themeToggle) {
-    const updateThemeToggle = () => {
-      const isDark = document.body.classList.contains('dark-mode');
-      themeToggle.querySelector('.theme-label').textContent = isDark ? 'Light' : 'Dark';
-      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-      themeToggle.setAttribute('aria-pressed', String(isDark));
-    };
-    updateThemeToggle();
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-      updateThemeToggle();
-    });
-  }
-
-  // mobile nav toggle
-  const navToggle = document.getElementById('navtoggle');
-  const navLinks = document.getElementById('navlinks');
-  if (navToggle && navLinks) {
-    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
-  }
-  document.querySelectorAll('.navlinks a').forEach(a=>{
-    a.addEventListener('click', ()=>{
-      const openNav = document.getElementById('navlinks');
-      if (openNav) openNav.classList.remove('open');
+    gallery.addEventListener("keydown", event => {
+      const card = event.target.closest(".photo-card, .design-card");
+      if (card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        openImage(card);
+      }
     });
   });
 
-  const yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  closeButton.addEventListener("click", () => imageLightbox.close());
+  previousButton.addEventListener("click", () => showImage(activeIndex - 1));
+  nextButton.addEventListener("click", () => showImage(activeIndex + 1));
+  imageLightbox.addEventListener("keydown", event => {
+    if (event.key === "ArrowLeft" && activeGallery.length > 1) {
+      event.preventDefault();
+      showImage(activeIndex - 1);
+    } else if (event.key === "ArrowRight" && activeGallery.length > 1) {
+      event.preventDefault();
+      showImage(activeIndex + 1);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      imageLightbox.close();
+    }
+  });
+  imageLightbox.addEventListener("click", event => {
+    if (event.target === imageLightbox) imageLightbox.close();
+  });
+  imageLightbox.addEventListener("close", () => {
+    document.body.classList.remove("lightbox-open");
+  });
+}
 
-  // generate selected work categories
-  const categories = [
-    {slug:'weddings', title:'Wedding Stories', subtitle:'Ceremony, emotion, and detail', hue1:'#E4D9C6', hue2:'#B79A6B'},
-    {slug:'portraits', title:'Portraits', subtitle:'Character and quiet confidence', image:'Portraits/DSC03434.jpg', hue1:'#E8DCD0', hue2:'#C79E86'},
-    {slug:'streets', title:'Street Life', subtitle:'People, movement, and place', hue1:'#DDD6C8', hue2:'#8E8C7C'},
-    {slug:'travel', title:'Travel & Culture', subtitle:'Journeys and rituals', hue1:'#DAD2BE', hue2:'#A99B72'}
-  ];
-
-  const sheet = document.getElementById('sheet');
-  if (sheet) {
-    const portraitHighlights = [
-      'Portraits/1764858444195.jpg', 'Portraits/DSC03434.jpg', 'Portraits/DSC05372.jpg',
-      'Portraits/DSC_3688.jpg', 'Portraits/INFI7751.jpg', 'Portraits/f13315008.jpg'
-    ];
-    categories.forEach((p, i) => {
-      const anchor = document.createElement('a');
-      anchor.className = 'category-card';
-      anchor.href = `gallery.html?cat=${p.slug}`;
-      const highlight = p.slug === 'portraits'
-        ? portraitHighlights[Math.floor(Math.random() * portraitHighlights.length)]
-        : p.image;
-      const imageStyle = highlight
-        ? `background-image: linear-gradient(to top, rgba(23,23,26,0.72), rgba(23,23,26,0.08)), url('${highlight}');`
-        : '';
-      anchor.innerHTML = `
-        <div class="category-card-image" style="--hue1:${p.hue1};--hue2:${p.hue2};${imageStyle}"></div>
-        <div class="category-card-overlay">
-          <div class="category-tag">${String(i+1).padStart(2, '0')}</div>
-          <div class="category-copy">
-            <h3>${p.title}</h3>
-            <p>${p.subtitle}</p>
-          </div>
-        </div>
-      `;
-      sheet.appendChild(anchor);
-    });
-  }
-
-  const contactForm = document.getElementById('contactForm');
-  if (contactForm) {
-    // Open a prefilled Gmail draft for this static-site form.
-    contactForm.addEventListener('submit', function(e){
-      e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      const name = formData.get('name');
-      const email = formData.get('email');
-      const message = formData.get('message');
-      const subject = `Portfolio enquiry from ${name}`;
-      const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
-      const gmailUrl = new URL('https://mail.google.com/mail/');
-      gmailUrl.search = new URLSearchParams({
-        view:'cm',
-        fs:'1',
-        to:'tamotsiddharth99@gmail.com',
-        su:subject,
-        body
-      });
-      window.open(gmailUrl.toString(), '_blank', 'noopener,noreferrer');
-    });
-  }
+document.querySelector("#year").textContent = new Date().getFullYear();
