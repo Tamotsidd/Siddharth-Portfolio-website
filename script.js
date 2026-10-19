@@ -3,6 +3,16 @@ const toggle = document.querySelector(".menu-toggle");
 const nav = document.querySelector(".main-nav");
 const navLinks = [...document.querySelectorAll(".main-nav a")];
 const glow = document.querySelector(".cursor-glow");
+const emailLink = document.querySelector("[data-desktop-href]");
+const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+  (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+const isMobileDevice = navigator.userAgentData?.mobile ?? mobileUserAgent;
+
+if (emailLink && !isMobileDevice) {
+  emailLink.href = emailLink.dataset.desktopHref;
+  emailLink.target = "_blank";
+  emailLink.rel = "noopener noreferrer";
+}
 
 toggle?.addEventListener("click", () => {
   const open = nav.classList.toggle("open");
