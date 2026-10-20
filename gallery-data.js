@@ -32,6 +32,18 @@
       folder: "assets/images/photography/nature",
       files: ["DSC01251.jpg"]
     },
+    "collabrated-works": {
+      type: "photo",
+      label: "COLLABRATED WORKS",
+      folder: "assets/images/photography/collabrated-works",
+      files: [
+        "DSC00655.jpg", "DSC00656.jpg", "DSC00681.jpg", "DSC00689.jpg",
+        "DSC00707.jpg", "DSC00782.jpg", "DSC00822.jpg", "DSC00824.jpg",
+        "DSC00956.jpg", "DSC00959.jpg", "DSC00963.jpg", "DSC00964.jpg",
+        "DSC00969.jpg", "DSC00976.jpg", "DSC00977.jpg", "DSC00984.jpg",
+        "DSC01006.jpg", "DSC01007.jpg"
+      ]
+    },
     portraits: {
       type: "photo",
       label: "PORTRAITS",
